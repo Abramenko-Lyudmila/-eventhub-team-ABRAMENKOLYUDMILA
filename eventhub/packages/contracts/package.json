@@ -1,0 +1,13 @@
+{
+  "name": "@eventhub/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "openapi-typescript openapi.yaml -o src/generated/schema.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}
