@@ -1,16 +1,17 @@
 import {
   Catch,
-  Logger,
   type ArgumentsHost,
   type ExceptionFilter,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { InjectPinoLogger, PinoLogger } from "nestjs-pino";
 import { toProblem } from "./problem";
 
 @Catch()
 export class ProblemFilter implements ExceptionFilter {
-  // ТИМЧАСОВО: на кроці 6 замінимо на PinoLogger
-  private readonly logger = new Logger(ProblemFilter.name);
+  constructor(
+    @InjectPinoLogger(ProblemFilter.name) private readonly logger: PinoLogger,
+  ) {}
 
   catch(err: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -18,14 +19,11 @@ export class ProblemFilter implements ExceptionFilter {
     const problem = toProblem(err);
 
     if (problem.status >= 500) {
-      // стектрейс — тільки в лог
-      this.logger.error(
-        `${req.method} ${req.url}: ${err instanceof Error ? err.message : String(err)}`,
-        err instanceof Error ? err.stack : undefined,
-      );
+      // стектрейс — тільки в лог, не у відповідь
+      this.logger.error({ err, url: req.url }, "unhandled error");
     } else {
-      // 4xx — очікувана поведінка, не error
-      this.logger.debug(`${problem.type} ${req.url}`);
+      // 4xx — очікувана поведінка, тому не error
+      this.logger.debug({ type: problem.type, url: req.url }, "request rejected");
     }
 
     ctx
